@@ -1,0 +1,20 @@
+{
+  "name": "Simple Leaflet Map",
+  "version": "0.0.1",
+  "homepage": "https://github.com/berkeley-gif/leaflet-tutorial",
+  "authors": [
+    "Shruti <mukhtyar@berkeley.edu>"
+  ],
+  "description": "Build a simple leaflet map. I hope.",
+  "license": "free",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "leaflet": "~0.7.3"
+  }
+}
