@@ -63,13 +63,13 @@ name: agenda
 
 - Lightweight, simple & flexible
 
+- Mobile-friendly. Well documented API, huge amount of plugins
+
 - [Vladimir Agafonkin](http://agafonkin.com/en/). Great speaker, checkout some of his talks on Leaflet
 
-- Mobile-friendly
+"Application development is a creative process. Technology should bridge the gap between creative thinking and the end result"
 
-- Well documented API, huge amount of plugins
-
-
+[.footnote[How Simplicity Will Save GIS]](https://speakerdeck.com/mourner/how-simplicity-will-save-gis)
 
 <!-- NEXT SLIDE -->
 ---
@@ -105,11 +105,13 @@ name: tasks
 
 - Load Data
 
-- Representation
+- Data Representation
 
 - Add Interaction
 
 - Plugins
+
+- Design
 
 <!--NEXT SLIDE -->
 ---
@@ -160,7 +162,9 @@ name: squeeze
 ]
 
 ```javascript
+// BLOCK A - Initialize Leaflet map here
 var map = L.map('map');
+// BLOCK A - End
 ```
 
 .ex[Refresh Chrome tab with map.html. Let's explore what we get. 
@@ -169,6 +173,7 @@ Let's change the map style in the html file (not js file!).
 ]
 
 ```xml
+/*EXERCISE 2 - Change map style here*/
 <style>
   #map { 
     height: 100%;
@@ -198,7 +203,9 @@ name: squeeze
 ]
 
 ```javascript
+// BLOCK B - Set view and zoom
 map.setView([37.76, -122.45], 13);
+// BLOCK B - End
 ```
 
 Many different ways to writing the same thing. Next block is just a demo of method chaining. 
@@ -216,12 +223,13 @@ name: squeeze
 
 ##Setting up the map
 
-- Exercise 3 (more)
+- Exercise 3
 
 .ex[ Add basemap tiles. Copy next block to map.js. Check out [Leaflet Tile Providers](http://leaflet-extras.github.io/leaflet-providers/preview/). Refresh Chrome tab after pasting
 ]
 
 ```javascript
+// BLOCK C - Add basemap tiles
 var tileURL = 'http://otile1.mqcdn.com/tiles/1.0.0/osm/{z}/{x}/{y}.png';
 
 var baselayer = L.tileLayer('http://otile1.mqcdn.com/tiles/1.0.0/osm/{z}/{x}/{y}.png',
@@ -233,6 +241,7 @@ var baselayer = L.tileLayer('http://otile1.mqcdn.com/tiles/1.0.0/osm/{z}/{x}/{y}
 );
 
 map.addLayer(baselayer);
+// BLOCK C - End
 ```
 
 .em[L.tileLayer] &raquo; Instantiates a tile layer object given a URL template and optionally an options object.
@@ -254,6 +263,7 @@ name: squeeze
 ]
 
 ```javascript
+// BLOCK D - Load Census Tract polygons from geojson file
 var polygons;
 
 $.getJSON("../data/SF_CensusTracts.geojson",function(censusTracts){
@@ -262,10 +272,13 @@ $.getJSON("../data/SF_CensusTracts.geojson",function(censusTracts){
   polygons = L.geoJson(censusTracts).addTo(map);
 
 });
+// BLOCK D - End
 ```
 
 .ex[ Checkout variables polygons and baselayer in Console panel. Inspect DOM.
 ]
+
+.em[L.geoJson] &raquo; Creates a GeoJSON layer. Optionally accepts an object in GeoJSON format to display on the map (you can alternatively add it later with addData method) and an options object.
 
 ---
 
@@ -273,14 +286,46 @@ name: squeeze
 
 ##Load data
 
-- Exercise 4 (more)
+- Exercise 4
+
+.ex[ Load 2014 Burglary locations from local geojson download. Copy next block to map.js. Refresh Chrome tab after pasting
+]
+
+```javascript
+  // BLOCK E - Load 2014 Burglary locations
+  $.getJSON("../data/SFPD_Burglaries_2014.geojson",function(data){
+    console.log(data);
+    // create geojson layer and assign it to a variable (burglaries)
+    // use pointToLayer method to create geojson layer
+    var burglaries = L.geoJson(data,{
+      pointToLayer: function(feature,latlng){
+        var marker = L.marker(latlng);
+        return marker;
+      }
+    });
+
+    map.addLayer(burglaries);
+
+  });
+  // BLOCK E - End
+```
+.ex[ If Lefalet is too slow to render, use SFPD_Burglaries_2014_subset.geojson
+]
+
+---
+name: squeeze
+
+##Load data 
+
+- Exercise 4 alternate
 
 .ex[ Load 2014 Burglary locations from SF OpenData API. Copy next block to map.js. Refresh Chrome tab after pasting
 ]
 
 ```javascript
+  // BLOCK F - Load 2014 Burglary location from API
   $.getJSON("https://data.sfgov.org/resource/v2gf-jivt.json?category=BURGLARY",function(data){
-    console.log(data);
+    console.log(data.length);
     // loop over data array, extract lat long values, create L.marker object for each location
     // add each marker to map
     for (var i = 0; i < data.length; i++) {
@@ -290,477 +335,256 @@ name: squeeze
       map.addLayer(marker);
     }
   });
+  // BLOCK F
 ```
 
-.ex[ SF OpenData API sends back data as json and geojson. If we had geojson 
+.ex[ SF OpenData API sends back data as .em[json] and not .em[geojson]. Default number of values returned are 1000. The documentation is not great, could not figure out how to get more than that. If you see our geojson file there should be over 6000 records.
 ]
 
 ---
 
+class: center, middle
 
+#5. Data Representation
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<!-- NEXT SLIDE -->
 ---
-name: add-jquery
+name: squeeze
 
+##Data Representation
 
-##Step 2 - Add [jQuery](https://jquery.com/)
-- Add library hosted on [jquery CDN](https://code.jquery.com/)
-```xml
-  <script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>    
-```
-- DOM, events, animation, widgets, AJAX ...
-```xml
-<script type="text/javascript">
-  $.getJSON(url, function(data){
-      //do something with the data
-  });
-</script>
-```
-... instead of
-```xml
-<script type="text/javascript">
-  xhr = new XMLHttpRequest;
-  xhr.onreadystatechange = function() {
-      if (xhr.readyState == 4 && xhr.status == 200) {
-        JSON.parse(xhr.responseText)//do something with the data;
-      }
-  }
-  xhr.open("GET", url);
-  xhr.send();
-</script>
-```
+- Exercise 5
 
-
-
-???
-add jquery
-lightweight, useful helper functions
-However, unlike specialist libraries for handling canvas, SVGs or other focused tasks, jQuery provides a generic set of tools — you’ll never need them all. The browser vendors have caught up and, unless you need to support oldIEs, jQuery is not the essential resource it once was
-
-
-
-
-
-
-<!-- NEXT SLIDE -->
----
-name: add-polygon
-
-##Step 3 - Add Census Tracks
-- Load geojson file
-```xml
-<script>
-...
-  $.getJSON('../data/SF_CensusTracks.geojson', function(censusTracks){
-      //do something with the data
-      console.log(censusTracks);
-  });
-</script>
-```
-- Explore output in Chrome console
-
-- Add geojson to [Leaflet map and style](http://leafletjs.com/examples/geojson.html)
-
-
-
-???
-Open example
-L.geoJson(geojsonFeature).addTo(map);
-see alternative way to add layer, say we'll use it for next layer
-change variable name
-refresh - see default styling
-
-
-
-
-
-
-<!-- NEXT SLIDE -->
----
-name: add-polygon
-
-
-##Step 4 - Add Census Tracks
-- Load geojson file
+.ex[ Add Function that will be used to get style options for census polygons based on attribute Inc2014
+]
 
 ```javascript
-  ...
-  $.getJSON('../data/SF_CensusTracks.geojson', function(censusTracks){
-      //do something with the data
-      console.log(censusTracks);
-  });
-```
-- Explore output in Chrome console
-
-- Add geojson to [Leaflet map and style](http://leafletjs.com/examples/geojson.html)
-
-
-
-???
-Open example
-L.geoJson(geojsonFeature).addTo(map);
-see alternative way to add layer, say we'll use it for next layer
-change variable name
-refresh - see default styling
-
-
-
-
-
-
-<!-- NEXT SLIDE -->
----
-name: style-polygon
-
-
-##Step 5 - Style Census Tracks
-- Pick attribute 'Inc2014' [ColorBrewer](http://colorbrewer2.org/)
-
-```javascript
-
-  $.getJSON('../data/SF_CensusTracks.geojson', function(censusTracks){     
-
-    // create L.geoJson layer and add data
-    L.geoJson(censusTracks, {
-
-      // add style
+  // BLOCK D - Load Census Tract polygons from geojson file
+  var polygons;
+  $.getJSON("../data/SF_CensusTracts.geojson",function(censusTracts){
+    // instantiate L.geoJson layer object and add data recieved from ajax call
+    polygons = L.geoJson(censusTracts, {
+      // style polygons by Inc2014
       style: function(feature){
-
-        var color, income = feature.properties.Inc2014;
-        if ( income > 80000 ) {
-            color = "blue";
-          }
-        else {
-          color = "red";
-        }
-        return {
-          fillColor: color
-        };
-
+        var color;
+        var income = feature.properties.Inc2014;
+        if ( income > 120000 ) color = "#4D004B";
+        else if ( income > 100000 ) color = "#810F7C";
+        else if ( income > 85000 ) color = "#88419D";
+        else if ( income > 50000 ) color = "#8C6BB1";
+        else if ( income > 20000 ) color = "#8C96C6";
+        else color = "#BFD3E6";
+        return { color: "#999", weight: 1, fillColor: color, fillOpacity: .6 };
       }
-      
     }).addTo(map);
   });
-
+  // BLOCK D - End
 ```
 
-
-
-
-???
-styling
-
-
-
-
-
-
-<!-- NEXT SLIDE -->
 ---
-name: popup-polygon
+name: squeeze
 
+##Data Representation
 
-##Step 6 - Label Census Tracks
-- Bind popup
+- Exercise 5
+
+.ex[ You can use custom icons to style points
+]
 
 ```javascript
+  // BLOCK E - Load 2014 Burglary locations
+  $.getJSON("../data/SFPD_Burglaries_2014_subset.geojson",function(data){
+    
+    // define custom icon
+    var burglarIcon = L.icon({
+      iconUrl: 'icon/Criminal_Silhouette.svg',
+      iconSize: [45,50]
+    });
 
-  $.getJSON('../data/SF_CensusTracks.geojson', function(censusTracks){     
+    // create geojson layer and assign it to a variable (burglaries)
+    var burglaries = L.geoJson(data,{
+      pointToLayer: function(feature,latlng){
+        var marker = L.marker(latlng,{icon: burglarIcon});
+        return marker;
+      }
+    });
 
-    // create L.geoJson layer and add data
-    L.geoJson(censusTracks, {
+    map.addLayer(burglaries);
 
-      // add style
-      ..., // dont forget comma separator between property:value pairs
+  });
+  // BLOCK E - End
+```
+---
 
-      //bind popup
+class: center, middle
+
+#6. Add Interaction
+
+---
+
+name: squeeze
+
+##Add Interaction
+
+- Exercise 6
+
+.ex[ One way to add interaction is pop ups. Add pop ups to census tracts.
+]
+
+```javascript
+  // BLOCK D - Load Census Tract polygons from geojson file
+  var polygons;
+
+  $.getJSON("../data/SF_CensusTracts.geojson",function(censusTracts){
+    
+    // instantiate L.geoJson layer object and add data recieved from ajax call
+    polygons = L.geoJson(censusTracts, {
+      // style polygons by Inc2014
+      style: function(feature){
+        var color;
+        var income = feature.properties.Inc2014;
+        if ( income > 120000 ) color = "#4D004B";
+        else if ( income > 100000 ) color = "#810F7C";
+        else if ( income > 85000 ) color = "#88419D";
+        else if ( income > 50000 ) color = "#8C6BB1";
+        else if ( income > 20000 ) color = "#8C96C6";
+        else color = "#BFD3E6";
+        return { color: "#999", weight: 1, fillColor: color, fillOpacity: .6 };
+      },
+      // bind popup to each polygon
       onEachFeature: function( feature, layer ){
-        layer.bindPopup( "<strong>Tract# " + feature.properties.SpatialID 
-        + "</strong><br/>Income: $" + feature.properties.Inc2014 + " " )
+        layer.bindPopup( "<strong>Tract# " + feature.properties.SpatialID + "</strong><br/>Income $" + feature.properties.Inc2014 + " " )
       }
-      
     }).addTo(map);
-
   });
-
+  // BLOCK D - End
 ```
-
-???
-
-
-
-
-
-
-<!-- NEXT SLIDE -->
 ---
-name: add-points
+name: squeeze
 
+##Add Interaction
 
-##Step 7 - Add Points
-- Load geojson file
+- Exercise 6
+
+.ex[ Add pop ups to burglary markers.
+]
 
 ```javascript
-  $.getJSON('../data/SFPD_Burglaries_2014_subset.geojson', function(data){
-      // create geojson layer and assign it to a variable (burglaries)
-      var burglaries = L.geoJson(data,{
-        pointToLayer: function(feature,latlng){
-          console.log(latlng);
-          var marker = L.marker(latlng);
-          return marker;
-        }
-      });
+  // BLOCK E - Load 2014 Burglary locations
+  $.getJSON("../data/SFPD_Burglaries_2014_subset.geojson",function(data){
+    // define custom icon
+    var burglarIcon = L.icon({
+      iconUrl: 'icon/Criminal_Silhouette.svg',
+      iconSize: [45,50]
+    });
 
-      map.addLayer(burglaries);
+    // create geojson layer and assign it to a variable (burglaries)
+    var burglaries = L.geoJson(data,{
+      pointToLayer: function(feature,latlng){
+        var marker = L.marker(latlng,{icon: burglarIcon});
+        marker.bindPopup(feature.properties.Descript + '<br/>RESOLUTION: ' + feature.properties.Resolution);
+        return marker;
+      }
+    });
+
+    map.addLayer(burglaries);
+
   });
+  // BLOCK E - End
 ```
-- Explore output in Chrome console
-
-- Points are added as [Leaflet markers](http://leafletjs.com/reference.html#marker)
-
-
-
-???
-
-
-
-
 <!-- NEXT SLIDE -->
 ---
+class: center, middle
 
-name: style-points
-
-##Step 8 - Style Points
-- Custom icons
-
-```javascript
-  $.getJSON('../data/SFPD_Burglaries_2014_subset.geojson', function(data){
-
-      // define custom icon
-      var burglarIcon = L.icon({
-        iconUrl: 'icons/Criminal_Silhouette.svg',
-        iconSize: [45,50]
-      });
-
-      // create geojson layer and assign it to a variable (burglaries)
-      var burglaries = L.geoJson(data,{
-        pointToLayer: function(feature,latlng){
-          var marker = L.marker(latlng, {icon: burglarIcon});
-          return marker;
-        }
-      });
-
-      map.addLayer(burglaries);
-  });
-```
-- SVG, PNG
-
-
-
-???
-
-
-
-
-
-
-
-<!-- NEXT SLIDE -->
+#7. Plugins
 ---
-name: label-points
+name: squeeze
 
 
-##Step 9 - Label Points
-- Bind popup
+##Plugins
 
-```javascript
-  $.getJSON('../data/SFPD_Burglaries_2014_subset.geojson', function(data){
+- Exercise 7
 
-      // define custom icon
-      var burglarIcon = L.icon({
-        iconUrl: 'icons/Criminal_Silhouette.svg',
-        iconSize: [45,50]
-      });
+.ex[Take a look at all the [Leaflet Plugins](http://leafletjs.com/plugins.html) here.
 
-      // create geojson layer and assign it to a variable (burglaries)
-      var burglaries = L.geoJson(data,{
-        pointToLayer: function(feature,latlng){
-          var marker = L.marker(latlng, {icon: burglarIcon});
-          marker.bindPopup(feature.properties.Descript + '<br/>' 
-          + feature.properties.Resolution);
-          return marker;
-        }
-      });
+We'll use the Leaflet.markercluster plugin
 
-      map.addLayer(burglaries);
-  });
-```
+If you look in leaflet-tutorial/exercise/bower_components/, you'll find the plugin is already installed.
 
+Add tags for script and css in head section of map.html
 
+Make sure you script tag for markercluster is after leaflet script tag
 
-???
-
-
-
-<!-- NEXT SLIDE -->
----
-name: plugins
-
-
-##Step 10 - Leaflet Plugins
-- [Leaflet.markercluster](http://leafletjs.com/plugins.html)
-
-- Download leaflet.markercluster.js, MarkerCluster.Default.css
-
-- Add tags for script and css files
+]
 
 ```xml
-  <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css"/>
-  <link rel="stylesheet" href="css/MarkerCluster.Default.css" />
-  <link rel="stylesheet" href="css/MarkerCluster.css" />
-  <script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.js"></script>
-  <script src="js/leaflet.markercluster.js"></script>
-  <script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+<link rel="stylesheet" href="bower_components/leaflet.markercluster/dist/MarkerCluster.Default.css" />
+<script src="bower_components/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
 ```
 
-???
-
-
-
-
-
-<!-- NEXT SLIDE -->
 ---
-name: clustering
+name: squeeze
 
+##Plugins
 
-##Step 11 - Clustering
-- Create L.markerClusterGroup and add geojson layer
+- Exercise 7
+
+.ex[Cluster the burglary points. Instead of subset use all the data
+
+]
 
 ```javascript
-  $.getJSON('../data/SFPD_Burglaries_2014.geojson', function(data){
+  // BLOCK E - Load 2014 Burglary locations
+  $.getJSON("../data/SFPD_Burglaries_2014.geojson",function(data){
+    // define custom icon
+    var burglarIcon = L.icon({
+      iconUrl: 'icon/Criminal_Silhouette.svg',
+      iconSize: [45,50]
+    });
 
-      // define custom icon
-      var burglarIcon = L.icon({
-        iconUrl: 'icons/Criminal_Silhouette.svg',
-        iconSize: [45,50]
-      });
+    // create geojson layer and assign it to a variable (burglaries)
+    var burglaries = L.geoJson(data,{
+      pointToLayer: function(feature,latlng){
+        var marker = L.marker(latlng,{icon: burglarIcon});
+        marker.bindPopup(feature.properties.Descript + '<br/>RESOLUTION: ' + feature.properties.Resolution);
+        return marker;
+      }
+    });
 
-      // create geojson layer and assign it to a variable (burglaries)
-      var burglaries = L.geoJson(data,{
-        pointToLayer: function(feature,latlng){
-          var marker = L.marker(latlng, {icon: burglarIcon});
-          marker.bindPopup(feature.properties.Descript + '<br/>' 
-          + feature.properties.Resolution);
-          return marker;
-        }
-      });
+    // create a variable called clusters
+    // add burglaries to clusters
+    // add clusters to map
+    var clusters = L.markerClusterGroup();
+    clusters.addLayer(burglaries);
+    map.addLayer(clusters);
 
-      // create a variable called clusters
-      var clusters = L.markerClusterGroup();
-      clusters.addLayer(burglaries);
-      map.addLayer(clusters);
   });
+  // BLOCK E - End
 ```
 
+---
+class: center, middle
 
+#8. Design
 
-???
-
-
-
+---
 
 
 <!-- NEXT SLIDE -->
----
-name: extra-1
 
+##Design
 
-##Step 12 - Get Data from SF OpenData API
+- Exercise 8 - Add Title and Legend
 
+.ex[Checkout these examples for inspiration:
+]
 
-- Instead of creating a L.geoJson layer, create the L.markerClusterGroup object first. 
-
-- Using a for loop, loop over the data, create markers, add it to markerClusterGroup
-
-- Check commented out code in final/map.html
-
-
-
-
-
-???
-
-
-
-
-
-
-
-
-
-<!-- NEXT SLIDE -->
----
-name: extra-2
-
-
-##Step 13 - Add Title and Legend
-
-###Checkout these examples for inspiration:
 - [Choropleth Leaflet map](http://leafletjs.com/examples/choropleth.html)
 
 - [Custom legend in MapBox](https://www.mapbox.com/mapbox.js/example/v1.0.0/custom-legend/)
 
+.ex[ Open [2014 Burglary Count ](final/map.html) in new tab
 
-
-
-
-???
-
-
-
-
-
-
-<!-- NEXT SLIDE -->
----
-name: final
-
-
-#Final
-
-### [2014 Burglary Count ](final/map.html)
-![Default-aligned image](img/3349295132_e899e691e4_z.jpg)
-
-
-???
-
-
-
+]
 
     </textarea>
     <script src="http://gnab.github.io/remark/downloads/remark-latest.min.js" type="text/javascript">
